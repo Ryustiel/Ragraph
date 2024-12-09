@@ -107,6 +107,6 @@ test.commit()
 
 # ================================================================= DISPLAY
 
-from graph_display import display_plotly
+from src import display_plotly
 
 display_plotly(test)
