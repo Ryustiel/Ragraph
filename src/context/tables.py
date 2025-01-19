@@ -18,8 +18,8 @@ from typing import List, Dict
 from sqlalchemy import (
     Column, Integer, String, 
     Float, ForeignKey, Table, 
-    ARRAY,
 )
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.ext.declarative import declared_attr
 
@@ -48,7 +48,7 @@ class Content(Base):
 
     id = Column(Integer, primary_key=True)
     text = Column(String, nullable=False)   # The actual content, meaningful piece of information
-    vector = Column(ARRAY(Float))   # Vector slot for the content
+    embedding = Column(Vector(dim=1))   # Vector slot for the content
 
     neighbors = relationship(   # Handles content to content neighbors
         "Content",
@@ -66,8 +66,14 @@ class Accessor(Base):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True)
-    text = Column(String, nullable=False)
-    vector = Column(ARRAY(Float))
+
+    @declared_attr
+    def embedding(cls):
+        """
+        This is a placeholder for the embedding attribute,
+        which will be of varying length depending on the accessor class.
+        """
+        return Column(Vector(dim=0)) # Vector slot for the content
 
     @declared_attr
     def contents(cls):
@@ -86,31 +92,32 @@ class Accessor(Base):
 # ================================================================= ACCESSORS
 
 
-for label, data in LAYER_DATA.items():
+for layer_name, data in LAYER_DATA.items():
     
     # Create an accessor table from the metadata
     accessor_edges = Table(
-        f'context_{label}_edges',
+        f'context_{layer_name}_edges',
         Base.metadata,
-        Column('node_id', Integer, ForeignKey(f'context_{label}.id'), primary_key=True),
+        Column('node_id', Integer, ForeignKey(f'context_{layer_name}.id'), primary_key=True),
         Column('neighbor_id', Integer, ForeignKey('context_contents.id'), primary_key=True),
     )
     
     accessor_class = type(
-        f"Context{label.capitalize()}Accessor",
+        f"Context{layer_name.capitalize()}Accessor",
         (Accessor,),  # Inherit from Base
         {
-            "__tablename__": table_name_from_label(label),  # Table name
+            "__tablename__": table_name_from_label(layer_name),  # Table name
+            "embedding": Column(Vector(dim=data.embeddings_dimension)),
 
             # Define the relationship to the content nodes
             "contents": relationship(
                 "Content",
                 secondary = accessor_edges,
-                primaryjoin = f"context_{label}.id == {accessor_edges}.c.node_id",
+                primaryjoin = f"context_{layer_name}.id == {accessor_edges}.c.node_id",
                 secondaryjoin = f"Content.id == {accessor_edges}.c.neighbor_id",
-                backref=table_name_from_label(label),  # Backrefs in Content are refered to as the table name itself
+                backref=table_name_from_label(layer_name),  # Backrefs in Content are refered to as the table name itself
             ),
         },
     )
 
-    ACCESSORS[label] = accessor_class
+    ACCESSORS[layer_name] = accessor_class

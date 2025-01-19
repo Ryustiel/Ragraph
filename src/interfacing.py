@@ -86,10 +86,13 @@ class ContextInput(BaseContextInput):
 
         return contents
 
-    def insert_content(self, session: Session, chunks: List[str], merge_threshold: float, too_similar_threshold: float):
+    def insert_content(self, session: Session, chunks: List[str], merge_threshold: float, identity_threshold: float):
         """
         Insert the contents with the current accessors.
         """
+        if merge_threshold > identity_threshold:
+            raise ValueError("merge_threshold must be less than identity_threshold")
+        
         # 1. Comupute accessors based on the current context
         # 2. Look through all the contents for any similar enough chunk, if there's one similar enough, do a merge.
         # If extremely similar do nothing, but start from the existing content.

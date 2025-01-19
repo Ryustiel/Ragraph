@@ -34,6 +34,7 @@ class LayerData(BaseModel):
     I couldve also just defined the tables directly but this structure is much easier to review.
     """
     embeddings_function: Callable[[Any], EmbeddingsVector]
+    embeddings_dimension: int
 
     type: Literal["text", "keywords"]
 
@@ -58,12 +59,14 @@ LAYER_DATA: Dict[str, LayerData] = {
         type = "text",
         similarity_threshold = 0.9,
         embeddings_function = lambda context: [0.0],
+        embeddings_dimension = 1,
     ),
 
     "words": LayerData(
         type = "keywords",
         similarity_threshold = 0.9,
         embeddings_function = lambda context: [1.0] if "orange" in [c.lower() for c in context] else [0.0],
+        embeddings_dimension = 1,
     ),
 
 }

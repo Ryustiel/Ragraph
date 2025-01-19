@@ -18,6 +18,7 @@ from typing import List, Dict, Type
 from .tables import Content, Accessor
 from .accessors import LayerData
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 class WeightedContent:
     def __init__(self, content: Content, weight: float):
@@ -159,16 +160,17 @@ class AccessorSet:
         - If no close match is found, create a new context.
         - The context's label is the latest item that was used in retrieval if it matched the context more than a certain threshold.
         """
-        accessors = AccessorSet(accessor_layer=accessor_layer)
+        accessor_set = AccessorSet(accessor_layer=accessor_layer)
+        input_vector = f"[{', '.join(map(str, vector))}]"
 
-        query = session.execute(
-            """
-                SELECT id, vector
-                FROM vektors_table
-                ORDER BY vector <=> :input_vector
-                LIMIT 4
-            """, 
-            {'input_vector': vector}
+        query = session.execute(text(
+            f"""
+            SELECT id, embedding
+            FROM {accessor_layer.__tablename__}
+            ORDER BY embedding <=> :input_vector
+            LIMIT 4
+            """), 
+            {'input_vector': input_vector}
         )
         results = query.fetchall()
 
@@ -178,10 +180,12 @@ class AccessorSet:
         if results:
             print("Found a result")
             # Apply drift
-            # accessors.update(best_match)
+            # accessor_set.update(best_match)
 
         else:
             print("No result found")
-            # Create new context
-            # accessors.update(new_context)
- 
+            new_accessor = session.add(accessor_layer(embedding=vector))
+            accessor_set.update(new_accessor)
+            
+        return accessor_set
+    
