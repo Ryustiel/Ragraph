@@ -15,8 +15,8 @@ Together, the many layers of accessor and their varying connection to contents r
 
 from typing import List, Dict, Type
 
-from .tables import Content, Accessor
-from .accessors import LayerData
+from .contents import Content, Accessor
+from ._accessor_config import LayerData
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 

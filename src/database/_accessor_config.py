@@ -15,6 +15,8 @@ from typing import (
     Optional,
 )
 
+from ._vectorizer import Vectorizer
+
 # ================================================================= TYPES
 
 EmbeddingsVector = List[float]
@@ -58,15 +60,15 @@ LAYER_DATA: Dict[str, LayerData] = {
     "test": LayerData(
         type = "text",
         similarity_threshold = 0.9,
-        embeddings_function = lambda context: [0.0],
-        embeddings_dimension = 1,
+        embeddings_function = Vectorizer.process,
+        embeddings_dimension = 3072,
     ),
 
     "words": LayerData(
         type = "keywords",
         similarity_threshold = 0.9,
-        embeddings_function = lambda context: [1.0] if "orange" in [c.lower() for c in context] else [0.0],
-        embeddings_dimension = 1,
+        embeddings_function = Vectorizer.process,
+        embeddings_dimension = 3072,
     ),
 
 }

@@ -1,5 +1,5 @@
 """
-Define the interfacing models, that accept outside information or produce exportable models.
+Define the interfacing models, that accept outside information (the context) or produce exportable models.
 Most of these models must be pydantic because they will be interacted with by the FastAPI layer.
 """
 from typing import (
@@ -8,7 +8,7 @@ from typing import (
 )
 from sqlalchemy.orm import Session
 
-from .context import (
+from .database import (
     Content, 
     Accessor, 
     ContentSet, 

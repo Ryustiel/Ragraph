@@ -1,15 +1,15 @@
 
-from .postgre import (
-    create_session,
+from .database import (
+    DatabaseConnection,
 )
 
-from .context import (
+from .database import (
     ACCESSORS, 
     Content,
     Accessor,
     EmbeddingsVector,
 )
 
-from .interfacing import (
+from .context import (
     ContextInput,
 )

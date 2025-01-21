@@ -23,7 +23,7 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.ext.declarative import declared_attr
 
-from .accessors import LAYER_DATA
+from ._accessor_config import LAYER_DATA
 
 Base = declarative_base()
 ACCESSORS: Dict[str, Table] = {}
@@ -48,7 +48,7 @@ class Content(Base):
 
     id = Column(Integer, primary_key=True)
     text = Column(String, nullable=False)   # The actual content, meaningful piece of information
-    embedding = Column(Vector(dim=1))   # Vector slot for the content
+    embedding = Column(Vector(dim=3072))   # Vector slot for the content
 
     neighbors = relationship(   # Handles content to content neighbors
         "Content",

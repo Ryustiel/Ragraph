@@ -1,9 +1,10 @@
-from .accessors import (
+
+from ._accessor_config import (
     BaseContextInput,
     EmbeddingsVector,
 )
 
-from .tables import (
+from .contents import (
     Base as ContextBase,
     Content,
     Accessor,
@@ -12,9 +13,13 @@ from .tables import (
     table_name_from_label,
 )
 
-from .operations import (
+from ._accessor_sets import (
     WeightedContent,
     WeightedAccessor,
     ContentSet,
     AccessorSet,
+)
+
+from ._postgre import (
+    DatabaseConnection,
 )
