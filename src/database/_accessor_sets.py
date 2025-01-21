@@ -16,7 +16,7 @@ Together, the many layers of accessor and their varying connection to contents r
 from typing import List, Dict, Type
 
 from .contents import Content, Accessor
-from ._accessor_config import LayerData
+from ._accessor_config import AccessorConfig
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -152,7 +152,7 @@ class AccessorSet:
         return sum([weighted_accessor.compute_contents() for weighted_accessor in self.accessors])  # TODO : Unwrap this operation so it doesnt take up as much memory
 
     @classmethod
-    def from_vector(cls, session: Session, accessor_layer: Type[Accessor], layer_data: LayerData, vector: List[float]) -> 'AccessorSet':
+    def from_vector(cls, session: Session, accessor_layer: Type[Accessor], accessor_config: AccessorConfig, vector: List[float]) -> 'AccessorSet':
         """
         - This extracts the closest accessor to the input vector.
         - What's called a DRIFT mechanism will cause the vector to shift slightly when receiving a match.

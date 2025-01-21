@@ -9,8 +9,6 @@ from .contents import (
     Content,
     Accessor,
     ACCESSORS,
-    LAYER_DATA,
-    table_name_from_label,
 )
 
 from ._accessor_sets import (

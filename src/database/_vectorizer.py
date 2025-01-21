@@ -54,7 +54,6 @@ class Vectorizer:
         api_key: Optional[str] = None,
         api_version: Optional[str] = None,
         azure_endpoint: Optional[str] = None,
-        **kwargs,  # Additional kwargs to pass to AzureOpenAI's constructor.
     ) -> AzureOpenAI:
         """Create an AzureOpenAI instance, use the default variables if available and handle errors if anything is missing."""
         if api_key is None:
@@ -70,10 +69,8 @@ class Vectorizer:
             raise ValueError("AZURE_OPENAI_API_VERSION is missing from the environment.")
         if azure_endpoint is None:
             raise ValueError("AZURE_OPENAI_ENDPOINT is missing from the environment.")
-        
-        print("BUILDING", api_key, api_version, azure_endpoint)
 
-        return AzureOpenAI(api_key=api_key, api_version=api_version, azure_endpoint=azure_endpoint, **kwargs)
+        return AzureOpenAI(api_key=api_key, api_version=api_version, azure_endpoint=azure_endpoint)
 
     @classmethod
     def get_global_client(cls) -> AzureOpenAI:

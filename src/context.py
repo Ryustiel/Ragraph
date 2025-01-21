@@ -14,10 +14,8 @@ from .database import (
     ContentSet, 
     AccessorSet, 
     ACCESSORS, 
-    LAYER_DATA,
     BaseContextInput, 
     EmbeddingsVector,
-    table_name_from_label,
 )
 
 
@@ -36,7 +34,7 @@ class ContextInput(BaseContextInput):
             if layer_name not in ACCESSORS.keys():
                 pass  # Skipping the parsing step for any layer that was not registered in context.accessors.py
             else:
-                layer = LAYER_DATA[layer_name]
+                layer = ACCESSORS[layer_name].accessor_config
 
                 if not isinstance(data, layer.get_input_type()):
                     raise ValueError(f"Layer type mismatch or unregistered data type: The layer is typed {layer.get_input_type()} while the data is typed {type(data)}.")
@@ -52,17 +50,17 @@ class ContextInput(BaseContextInput):
         First calculate vectors for each accessor then run a match for each layer.
         The result is a Dict[<layer name>, <set of 1 single accessor>]        
         """
-        layer_data = self.compute_vectors()
+        accessor_config = self.compute_vectors()
 
-        for layer_name, vector in layer_data.items():
-            layer_data[layer_name] = AccessorSet.from_vector(
+        for layer_name, vector in accessor_config.items():
+            accessor_config[layer_name] = AccessorSet.from_vector(
                 session=session, 
                 accessor_layer=ACCESSORS[layer_name],
-                layer_data=LAYER_DATA[layer_name], 
+                accessor_config=ACCESSORS[layer_name].accessor_config, 
                 vector=vector,
             )
 
-        return layer_data
+        return accessor_config
 
     def compute_contents(self, session: Session, max_depth: int) -> ContentSet:
         """

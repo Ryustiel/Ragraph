@@ -2,6 +2,9 @@
 Define the accessor layers for the database.
 
 Each accessor is defined by a label and a function that creates the content from the input. Callable
+
+NOTE : ACCESSOR_CONFIG is converted into a LAYERS by the .contents.py module which builds the database dynamically.
+The AccessorConfig object is still accessible from the ORM.accessor_config attribute.
 """
 from pydantic import BaseModel
 from typing import (
@@ -27,7 +30,7 @@ class BaseContextInput(BaseModel):
     """
     context: Dict[str, Union[str, List[str]]]
 
-class LayerData(BaseModel):
+class AccessorConfig(BaseModel):
     """
     Accessor layer definition data, to be converted to the actual layers. (Accessor Nodes)
     A layer is a set of accessors.
@@ -55,16 +58,16 @@ class LayerData(BaseModel):
 
 # ================================================================= ACCESSORS
 
-LAYER_DATA: Dict[str, LayerData] = {
+ACCESSOR_CONFIG: Dict[str, AccessorConfig] = {
 
-    "test": LayerData(
+    "test": AccessorConfig(
         type = "text",
         similarity_threshold = 0.9,
         embeddings_function = Vectorizer.process,
         embeddings_dimension = 3072,
     ),
 
-    "words": LayerData(
+    "words": AccessorConfig(
         type = "keywords",
         similarity_threshold = 0.9,
         embeddings_function = Vectorizer.process,
