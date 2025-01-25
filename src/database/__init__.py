@@ -1,21 +1,14 @@
 
-from ._accessor_config import (
-    BaseContextInput,
+from ._config import (
     EmbeddingsVector,
 )
 
-from .contents import (
+from .tables import (
     Base as ContextBase,
     Content,
     Accessor,
     ACCESSORS,
-)
-
-from ._accessor_sets import (
-    WeightedContent,
-    WeightedAccessor,
     ContentSet,
-    AccessorSet,
 )
 
 from ._postgre import (

@@ -11,18 +11,12 @@ from typing import (
 
 from sqlalchemy import create_engine, text, Engine
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.engine.url import make_url
-from sqlalchemy.exc import ProgrammingError
 
 # NOTE : Keep these imports ordered in the order the Base object is juggled around. (case of adding an extra table)
-from .contents import (
+from .tables import (
     Content,
     Accessor,
     ACCESSORS,
-)
-from .prompts import (
-    UserStatement,
-    SuggestedReply,
     Base,
 )
 
@@ -58,38 +52,6 @@ class DatabaseConnection:
     
     # ================================================================= MAINTAINANCE OPERATIONS
     
-    def create_database(self):
-        """Creates the database corresponding to the base_url if it does not exist already."""
-
-        url = make_url(self.url)
-        database_name = url.database
-        if not database_name:
-            raise ValueError("No database name found in the connection string.")
-
-        # Replace database name with the "maintenance" database (e.g., 'postgres') to connect to the server
-        url = url.set(database=None)
-        server_url = str(url)
-
-        # Use a connection to the server to create the database
-        temp_engine = create_engine(server_url)
-        try:
-            with temp_engine.connect() as connection:
-                # Check if the database already exists
-                result = connection.execute(text(f"SELECT 1 FROM pg_database WHERE datname = '{database_name}';"))
-                database_exists = result.scalar() is not None
-
-                if not database_exists:
-                    connection.execute(text(f'CREATE DATABASE "{database_name}";'))
-                    print(f"Database '{database_name}' created successfully.")
-                else:
-                    print(f"Database '{database_name}' already exists.")
-        except ProgrammingError as e:
-            raise RuntimeError("Failed to create the database. Ensure you have the necessary privileges.") from e
-        finally:
-            temp_engine.dispose()
-
-        self._engine = None  # Now reinitialize the engine to point to the newly created database
-
     def create_tables(self):
         """Creates all tables in the database."""
         Base.metadata.create_all(self.engine)
