@@ -7,9 +7,6 @@ from .database import (
     ACCESSORS, 
     Content,
     Accessor,
+    Context,
     EmbeddingsVector,
-)
-
-from .context import (
-    ContextInput,
 )

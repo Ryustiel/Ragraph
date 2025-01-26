@@ -13,13 +13,7 @@ from sqlalchemy import create_engine, text, Engine
 from sqlalchemy.orm import sessionmaker, Session
 
 # NOTE : Keep these imports ordered in the order the Base object is juggled around. (case of adding an extra table)
-from .tables import (
-    Content,
-    Accessor,
-    ACCESSORS,
-    Base,
-)
-
+from .E_DynamicTables import *
 
 class DatabaseConnection:
     """

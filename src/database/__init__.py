@@ -3,14 +3,11 @@ from ._config import (
     EmbeddingsVector,
 )
 
-from .tables import (
-    Base as ContextBase,
+from ._postgre import (
     Content,
     Accessor,
     ACCESSORS,
-    ContentSet,
-)
-
-from ._postgre import (
     DatabaseConnection,
 )
+
+from .interface import Context
