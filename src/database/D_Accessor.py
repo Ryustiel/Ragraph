@@ -69,6 +69,13 @@ class Accessor(Base):
         new_accessor = cls(embedding=cls.accessor_config.embeddings_function(text))
         session.add(new_accessor)
         return new_accessor
+    
+    @classmethod
+    def from_id(cls, session: Session, id: int) -> Optional['Accessor']:
+        """
+        Fetches an accessor from the database by its ID.
+        """
+        return session.query(cls).filter(cls.id == id).first()
 
     @classmethod
     def vector_search(cls, session: Session, input_vector: List[float], max_output: int = 1) -> List['Accessor']:

@@ -53,6 +53,14 @@ CONTENT_SIMILARITY_CONDITION: Callable[[EmbeddingsVector, EmbeddingsVector], boo
 # Determines when a chunk is too similar to be worth merging
 CONTENT_IDENTITY_CONDITION: Callable[[EmbeddingsVector, EmbeddingsVector], bool] = l2_norm(0.1)
 
+EDGE_DELETE_CONDITION: Callable[[float], bool] = lambda x: x < 0.1
+
+# Weight update formulas
+WEIGHT_STRONG_INCREASE: Callable[[float], float] = lambda x: min(x * 1.5, 1)
+WEIGHT_INCREASE: Callable[[float], float] = lambda x: min(x * 1.1, 1)
+WEIGHT_DECREASE: Callable[[float], float] = lambda x: max(x * 0.9, 0)
+WEIGHT_STRONG_DECREASE: Callable[[float], float] = lambda x: max(x * 0.5, 0)
+
 # Content embedding config
 CONTENT_EMBEDDINGS_FUNCTION: Callable[[str], EmbeddingsVector] = Vectorizer.process
 CONTENT_EMBEDDINGS_DIMENSIONS: int = 3072

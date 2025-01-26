@@ -1,1 +1,0 @@
-from plotly_display import display_plotly

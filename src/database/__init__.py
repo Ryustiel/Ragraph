@@ -5,6 +5,7 @@ from ._config import (
 
 from ._postgre import (
     Content,
+    ContentSet,
     Accessor,
     ACCESSORS,
     DatabaseConnection,

@@ -1,4 +1,8 @@
 
+from typing import (
+    Optional,
+)
+
 from sqlalchemy import (
     Column, Integer,
     Float, ForeignKey,
@@ -43,3 +47,7 @@ class AccessorEdge(Base):
             cls.content_id == content_id,
             cls.accessor_id == accessor_id
         )).scalar()
+    
+    @classmethod
+    def get_edge(cls, session: Session, content_id: int, accessor_id: int) -> Optional['AccessorEdge']:
+        return session.query(cls).filter_by(content_id=content_id, accessor_id=accessor_id).first()
