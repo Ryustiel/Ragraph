@@ -16,8 +16,8 @@ from sqlalchemy.orm import relationship, declarative_base, Session
 
 from ._config import CONTENT_EMBEDDINGS_FUNCTION, CONTENT_EMBEDDINGS_DIMENSIONS
 from ._vectorizer import Vectorizer
-from .naming import CONTENT_TABLE_NAME, ACCESSOR_ATTRIBUTE_PREFIX
-from .B_LatentChunk import *
+from ._naming import CONTENT_TABLE_NAME, CLUSTER_TABLE_NAME, ACCESSOR_ATTRIBUTE_PREFIX
+from .B_Cluster import *
 
 
 # ================================================================= CONTENT SET (DATA TRANSPORT)
@@ -64,8 +64,27 @@ class Content(Base):
     text = Column('text', String, nullable=False)
     embedding = Column('embedding', Vector(dim=CONTENT_EMBEDDINGS_DIMENSIONS), nullable=False)
     behavior = Column('behavior', String(20), nullable=False, default='regular')  # Special flag for the content, has no use for now
+    cluster_id = Column('cluster_id', Integer, ForeignKey(f"{CLUSTER_TABLE_NAME}.id"), nullable=True, default=None)
 
-    latent_chunks = relationship('LatentChunk', backref="content")
+    cluster = relationship('Cluster', back_populates="contents")
+    latent_chunks = relationship('LatentChunk', back_populates="content")
+
+    outgoing_links = relationship(
+        "ContentLink",
+        foreign_keys="[ContentLink.origin]",
+        back_populates="origin_content",
+    )
+    incoming_links = relationship(
+        "ContentLink",
+        foreign_keys="[ContentLink.target]",
+        back_populates="target_content",
+    )
+    
+    # Convenience property to get neighbors with weights
+    @property
+    def neighbors(self):
+        return [(link.target_content, link.weight) for link in self.outgoing_links]
+
 
     def __hash__(self):
         """Unique hash for indexing in a ContentSet"""
@@ -134,6 +153,7 @@ class Content(Base):
 
 
     # ================================================================= DISPLAY
+
 
     @classmethod
     def get_nodes(cls, session: Session) -> List[Tuple[int, str]]:

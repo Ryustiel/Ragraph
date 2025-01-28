@@ -27,16 +27,7 @@ from ._config import (
 )
 from ._vectorizer import Vectorizer
 from ._postgre import LatentChunk, Content, ContentSet, Accessor, ACCESSORS
-from .naming import attribute_name
-
-
-
-class WeightUpdate(Dict[int, Literal["strong decrease", "decrease", "hold", "increase", "strong increase"]]):
-    """
-    Represents a mapping of content_ids to weight update labels.
-    """
-    pass
-
+from ._naming import attribute_name
 
 
 class Context(Dict[str, Accessor]):
@@ -100,14 +91,23 @@ class Context(Dict[str, Accessor]):
         for content_set in [accessor.get_contents(session) for accessor in self.values()]:
             result += content_set
         return result
+    
+
+    def update_links(self, session: Session, content_set: ContentSet):
+        """
+        Updates the content links based on the input.
+        """
+        pass
 
 
-    def update_weights(self, session: Session, weight_update: WeightUpdate):
+    def update_weights(self, session: Session, weight_update: Dict[int, Literal["strong decrease", "decrease", "hold", "increase", "strong increase"]]):
         """
         1. For each accessor in the current context, get the edges associated to the content nodes referenced as keys in weight_update
         2. For each edge, apply the corresponding weight update formula.
         NOTE : Multiple edges typically connect to a single content node, and will each be applied the same formula.
         3. If the DELETE_CONDITION is valid for the new weight on an edge, it is deleted.
+
+        weight_update : Represents a mapping of content_ids to weight update labels.
         """
         for layer_name, accessor in self.items():
             for content_id, update_label in weight_update.items():
@@ -138,6 +138,8 @@ class Context(Dict[str, Accessor]):
         """
         Produce a context dict from a context input of shape {<layer name>: <input string>}
         A vector search will be performed to find or create a relavant accessor node from each requested layer.
+
+        input : Representes a mapping of layer_name to context input string.
         """
         compiled_context = cls()
         for layer_name, context_input in input.items():

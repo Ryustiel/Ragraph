@@ -52,7 +52,18 @@ class DatabaseConnection:
 
     def drop_tables(self):
         """Drops all tables in the database."""
-        Base.metadata.drop_all(self.engine)
+        # Base.metadata.drop_all(self.engine)
+        with self.engine.connect() as connection:
+            connection.execute(text("""
+                DO $$ 
+                BEGIN
+                    EXECUTE (
+                        SELECT string_agg('DROP TABLE IF EXISTS ' || quote_ident(table_name) || ' CASCADE;', ' ')
+                        FROM information_schema.tables
+                        WHERE table_schema = 'public'
+                    );
+                END $$;
+            """))
 
     def activate_pgvector(self):
         with self as session:

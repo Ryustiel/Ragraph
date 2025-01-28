@@ -11,7 +11,7 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import relationship
 
 from ._config import ACCESSOR_CONFIG, AccessorConfig
-from .naming import *
+from ._naming import *
 from .D_Accessor import *
 
 

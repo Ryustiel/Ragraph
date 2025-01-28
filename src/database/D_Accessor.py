@@ -41,7 +41,7 @@ class Accessor(Base):
 
     def get_contents(self, session: Session) -> ContentSet:
         """
-        Returns a set of weighted contents.
+        Returns a set of weighted contents from the edges of this accessor.
         """
         contents = ContentSet()
         edges = session.query(self.edges).filter(self.edges.accessor_id == self.id).all()
@@ -52,9 +52,13 @@ class Accessor(Base):
     @classmethod
     def from_text(cls, session: Session, text: str) -> 'Accessor':
         """
+        GET OR CREATE
+
         1. Finds the most similar accessor in the vector db.
-        2. If the closest match is below the similarity threshold, return the accessor.
+        2. If the closest match triggers the SIMILARITY CONDITION, return the accessor.
         3. Otherwise, create a new accessor in the layer with the input text as a content.
+        4. If the new accessor triggers the SNAP CONDITION with the closest match, 
+        duplicate the edges of the closest match onto the new accessor. (so that it already starts with a couple edges and weights set)
         """
         # Find the most similar accessor in the vector db
         similar_accessors = cls.vector_search(session, cls.accessor_config.embeddings_function(text), max_output=1)
@@ -66,13 +70,27 @@ class Accessor(Base):
                 return most_similar_accessor
 
         # Otherwise, create a new accessor in the layer with the input text as a content
-        new_accessor = cls(embedding=cls.accessor_config.embeddings_function(text))
+        new_embedding = cls.accessor_config.embeddings_function(text)
+        new_accessor = cls(embedding=new_embedding)
+        
+        # Use the snap condition to add edges pointing to the same content nodes
+        if similar_accessors:
+            most_similar_accessor = similar_accessors[0]
+            # Only add the edges if the snap condition is True.
+            if cls.accessor_config.snap_condition(new_embedding, most_similar_accessor.embedding):
+                similar_edges = session.query(cls.edges).filter(cls.edges.accessor_id == most_similar_accessor.id).all()
+                for edge in similar_edges:
+                    new_edge = cls.edges(accessor_id=new_accessor.id, content_id=edge.content_id, weight=edge.weight)
+                    session.add(new_edge)
+        
         session.add(new_accessor)
         return new_accessor
     
     @classmethod
     def from_id(cls, session: Session, id: int) -> Optional['Accessor']:
         """
+        GET
+
         Fetches an accessor from the database by its ID.
         """
         return session.query(cls).filter(cls.id == id).first()
