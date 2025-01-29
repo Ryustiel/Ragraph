@@ -64,6 +64,7 @@ class ConversationGateway:
         self.add_message_no_output(message)
 
         with DatabaseConnection() as session:
+            print("Building context")
             context_input = CREATE_CONTEXT_PROMPT.invoke({"conversation": self.history.pretty()})
 
             print(context_input)

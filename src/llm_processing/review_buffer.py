@@ -33,7 +33,7 @@ MISSING_CONTENT_REVIEW = LLMFunction(LLM,
                             \n\nAI REMEMBERED IN THE MIDDLE OF THE CONVERSATION: {content}
                             """,
 
-                            what_they_had_to_know = ["example", ...]
+                            relevant_chunks = ["example", ...]
                 )
 UESLESS_CONTENT_REVIEW = LLMFunction(LLM,
                             """
@@ -132,10 +132,11 @@ class ReviewBuffer:
             missing_content = MISSING_CONTENT_REVIEW.invoke({"conversation": self.history.pretty(), "content": str(contents)})
             print(missing_content)
 
-            for cnt in missing_content:
+            for cnt in missing_content.relevant_chunks:
+                print(cnt)
                 context.add_content(session, cnt)
 
-            # Pick (not totally) randomly chunks from the contents
+            # Pick (not completely) random chunks from the contents
             # Perform the review on the chunks and update the weights in the graph
 
         self.completed = True
