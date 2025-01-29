@@ -6,12 +6,11 @@ from typing import (
 )
 from pydantic import BaseModel
 
-from ..database import ContentSet
+from ..database import ContentSet, DatabaseConnection, Context, ACCESSORS
 from .review_buffer import ReviewBuffer
-from raphlib import ChatHistory, ChatMessage, LLMFunction
-from database import DatabaseConnection, Context, ACCESSORS
-
 from ._llm import LLM
+
+from raphlib import ChatHistory, ChatMessage, LLMFunction
 
 class ContextInput(BaseModel):
     action: Optional[str] = None
@@ -23,7 +22,8 @@ CREATE_CONTEXT_PROMPT = LLMFunction(LLM,
                     populate the fields of your structured output with keywords and phrases that best represent the state of the conversation
                     especially around the last user message. You may leave any field blank (empty string) if there's nothing to put in here.
                     \nDetails on some of the fields:
-                    * "action" represents what somebody should do to fulfill the user request. ("Search the web", "Make a joke", "Shout", ...)
+                    * "action" represents what somebody should do to fulfill the user request. This should only contain verbal context, not the exact thing to do ("Search the web", "Make a joke", "Shout", ...) and NOT ("Search the web for", "Make a joke about", ...)
+                    * "tone" represents how the user seems to feel like. Can be a very detailed description. ("A bit bored", "Excited", "Conspicious",...)
                     \n\nCONVERSATION: {conversation}
                     """,
                     pydantic_model = ContextInput,
@@ -47,8 +47,9 @@ class ConversationGateway:
         This is useful when populating the history with initial messages, 
         and when inserting AI responses that do not need to be associated with a content set.
         """
+
         self.history.append(message)
-        for i, review in reversed(enumerate(self.pending_reviews)):
+        for i, review in reversed(list(enumerate(self.pending_reviews))):
             review.add_message(message)
             if review.is_complete():
                 self.pending_reviews.pop(i)
@@ -63,13 +64,18 @@ class ConversationGateway:
         self.add_message_no_output(message)
 
         with DatabaseConnection() as session:
-            context_input = CREATE_CONTEXT_PROMPT.invoke(conversation=str(self.history))
+            context_input = CREATE_CONTEXT_PROMPT.invoke({"conversation": self.history.pretty()})
+
+            print(context_input)
+
             context = Context.from_input(session, input=context_input.model_dump(exclude_none=True))
-            contents = context.get_content()
+            contents = context.get_content(session)
             # Extract the cluster content using the special iterator on the contents object
             # Build the prompt and print it
-            print([content.text for content in contents])
+            
+            # import streamlit
+            # streamlit.info([content.text for content in contents])
 
         if len(self.history) >= 3:
-            self.pending_reviews.append(ReviewBuffer(self.history.last(3), {layer_name: accessor.id for layer_name, accessor in context}))
+            self.pending_reviews.append(ReviewBuffer(self.history.last(3), {layer_name: accessor.id for layer_name, accessor in context.items()}))
         

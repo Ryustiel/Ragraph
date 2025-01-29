@@ -37,7 +37,7 @@ class Context(Dict[str, Accessor]):
     The context is a dict of shape {<layer name>: <accessor instance from the db>}
     """
 
-    def insert_content(self, session: Session, text: str):
+    def add_content(self, session: Session, text: str):
         """
         Inserts the new content into the database or updates the existing similar content node.
         Makes it accessible via the provided context if it's not already.

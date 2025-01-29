@@ -5,10 +5,10 @@ from typing import (
     Callable,
 )
 
-from raphlib import ChatHistory, ChatMessage, LLMFunction
-from database import DatabaseConnection, Content, Context
+from ..database import DatabaseConnection, Content, Context
 from ._llm import LLM
 
+from raphlib import ChatHistory, ChatMessage, LLMFunction
 from datetime import datetime, timedelta
 
 
@@ -19,12 +19,18 @@ CHUNK_REVIEW = LLMFunction(LLM,
                 )
 MISSING_CONTENT_REVIEW = LLMFunction(LLM, 
                             """
-                            In the conversation, did the AI miss some important information or instructions that made it fail to reply properly? 
+                            You will be provided a conversation between an AI and users.
+                            The AI was "remembering" information and instructions in the middle of the conversation.
+
+                            Did the AI miss some important information or instructions that made it fail to reply properly? 
                             If yes, what was it that the AI had to know in order to respond properly, but obviously did not know?
+
                             If any, write it down as chunks of information in your structured output, as if to be inserted into a vector store,
                             so that they can be remembered if that context occurs again.
+                            For example in your output : ["User likes mangoes"]
+
                             \n\nCONVERSATION: {conversation}
-                            \n\nAI REMEMBERED IN THE MIDDLE OF THE CONVERSATION: {context}
+                            \n\nAI REMEMBERED IN THE MIDDLE OF THE CONVERSATION: {content}
                             """,
 
                             what_they_had_to_know = ["example", ...]
@@ -41,7 +47,7 @@ UESLESS_CONTENT_REVIEW = LLMFunction(LLM,
                             your answer should only rely on the relationship between it's "middle messages" and how it decided to answer afterwards.
 
                             \n\nCONVERSATION: {conversation}
-                            \n\nAI REMEMBERED IN THE MIDDLE OF THE CONVERSATION: {context}
+                            \n\nAI REMEMBERED IN THE MIDDLE OF THE CONVERSATION: {content}
                             """,
 
                             mislaeding_chunks = ["example", ...]
@@ -106,6 +112,8 @@ class ReviewBuffer:
             return
 
         self.history.messages.append(message)
+
+        # Populate the prompt of the review and show what's in it on streamlit
         
         if len(self.history) > 7:
             self.perform_review()
@@ -119,11 +127,16 @@ class ReviewBuffer:
             context = Context.from_input(session, self.context)
             contents = context.get_content(session)
 
-            print(contents)
+            print("Performing review with", contents, self.context)
+
+            missing_content = MISSING_CONTENT_REVIEW.invoke({"conversation": self.history.pretty(), "content": str(contents)})
+            print(missing_content)
+
+            for cnt in missing_content:
+                context.add_content(session, cnt)
 
             # Pick (not totally) randomly chunks from the contents
             # Perform the review on the chunks and update the weights in the graph
-            # Perform the missing content review and update the database.
 
         self.completed = True
         
