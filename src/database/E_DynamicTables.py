@@ -41,6 +41,13 @@ for layer_name, config in ACCESSOR_CONFIG.items():
         },
     )
     
+    review_edge_association = Table(
+        f'{REVIEW_TABLE_NAME}_association',
+        Base.metadata,
+        Column('review_id', Integer, ForeignKey(f'{REVIEW_TABLE_NAME}.id', ondelete="CASCADE")),
+        Column('edge_id', Integer, ForeignKey(f'{edge_table_name(layer_name)}.id', ondelete="CASCADE"))
+    )
+
     accessor_class = type(
         accessor_class_name(layer_name),
         (Accessor,),

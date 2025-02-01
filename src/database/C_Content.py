@@ -48,6 +48,14 @@ class ContentSet(Dict['Content', float]):
         for key, weight in self.items():
             result[key] = weight * factor
         return result
+    
+    def get_chunks(self, session: Session) -> List[str]:
+        """Returns the chunks retrieved from the content or the clusters or the hyper clusters depending on the shit."""
+        # TODO : Look for clusters
+        # TODO : Look for hyper clusters
+        ordered_items = [content for content, weights in self.items()]  # Order the chunks by weight descending
+        chunks = [content.text for content in ordered_items]
+        return chunks
 
 
 # ================================================================= CONTENT ORM

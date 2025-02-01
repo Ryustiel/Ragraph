@@ -56,7 +56,7 @@ class ConversationGateway:
 
         self.history = self.history.last(5)  # Only retain the last 5 messages
 
-    def add_message(self, message: ChatMessage) -> ContentSet:
+    def add_message(self, message: ChatMessage) -> List[str]:
         """
         Stores the message and updates the review.
         In addition to that, compute the contents for the message and program a review for later.
@@ -64,19 +64,15 @@ class ConversationGateway:
         self.add_message_no_output(message)
 
         with DatabaseConnection() as session:
-            print("Building context")
+
             context_input = CREATE_CONTEXT_PROMPT.invoke({"conversation": self.history.pretty()})
 
-            print(context_input)
-
             context = Context.from_input(session, input=context_input.model_dump(exclude_none=True))
-            contents = context.get_content(session)
-            # Extract the cluster content using the special iterator on the contents object
-            # Build the prompt and print it
+            content_set = context.get_content(session)
             
-            # import streamlit
-            # streamlit.info([content.text for content in contents])
+            chunks = content_set.get_chunks(session)
 
         if len(self.history) >= 3:
             self.pending_reviews.append(ReviewBuffer(self.history.last(3), {layer_name: accessor.id for layer_name, accessor in context.items()}))
         
+        return chunks

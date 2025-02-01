@@ -16,6 +16,15 @@ from ._naming import LATENT_CHUNKS_TABLE_NAME, CONTENT_TABLE_NAME, CLUSTER_TABLE
 from .A_Edge import *
 
 
+
+hypercluster_cluster_association = Table(
+    f'{HYPER_CLUSTER_TABLE_NAME}_association',
+    Base.metadata,
+    Column('hypercluster_id', String, ForeignKey(f'{HYPER_CLUSTER_TABLE_NAME}.id', ondelete="CASCADE")),
+    Column('cluster_id', Integer, ForeignKey(f'{CLUSTER_TABLE_NAME}.id', ondelete="CASCADE"))
+)
+
+
 class LatentChunk(Base):
     """
     When many text inputs fall in the similarity_condition and not the identity_condition
@@ -23,6 +32,15 @@ class LatentChunk(Base):
 
     When they accumulate for a particular content node, they are merged together using a LLM function
     and replace the text and vector of the content node, effectively replacing it with "more relevant" content.
+
+    TODO : Whenever a content node matches when adding content, the latent chunks are automatically merged,
+    but not deleted.
+    Latent chunks are deleted if the merge contains more than X latent chunks, then the merge is added back here as a new LatentChunk that replaces the rest.
+
+    TODO : Add a flag, if a LatentChunk has been added, but has not been merged into a Content, then the content should be updated.
+    If a content is updated then its cluster should also be updated, as well as its hyper cluster. (Cascading updates)
+    # TODO : Instead of flags just trigger the update of the content, then trigger the update of everything else as a cascade.
+    Two types of updates? Partial merge without changing the vector, and total merge with updating the vector and the clusters.
     """
     __tablename__ = LATENT_CHUNKS_TABLE_NAME
     
@@ -33,13 +51,6 @@ class LatentChunk(Base):
 
     content = relationship('Content', back_populates="latent_chunks")
 
-
-hypercluster_cluster_association = Table(
-    f'{HYPER_CLUSTER_TABLE_NAME}_association',
-    Base.metadata,
-    Column('hypercluster_id', String, ForeignKey(f'{HYPER_CLUSTER_TABLE_NAME}.id', ondelete="CASCADE")),
-    Column('cluster_id', Integer, ForeignKey(f'{CLUSTER_TABLE_NAME}.id', ondelete="CASCADE"))
-)
 
 
 class Cluster(Base):
@@ -64,6 +75,7 @@ class Cluster(Base):
         Returns True if the cluster has any content that can replace the content nodes, False otherwise.
         """
         return self.text is not None
+
 
 
 class HyperCluster(Base):
