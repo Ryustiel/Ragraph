@@ -2,12 +2,7 @@
 ACCESSOR_ATTRIBUTE_PREFIX = "accessors_"
 
 CONTENT_TABLE_NAME = "context__contents"
-CLUSTER_TABLE_NAME = "context__clusters"
-REVIEW_TABLE_NAME = "context__reviews"
 CONTENT_LINK_TABLE_NAME = "context__content_links"
-LATENT_CHUNKS_TABLE_NAME = "context__latent_chunks" 
-HYPER_CLUSTER_TABLE_NAME = "context__hyper_clusters"
-LATENT_REVIEW_TABLE_NAME = "context__latent_reviews"
 
 def accessor_table_name(label: str) -> str:
     """Generates a name for an accessor table"""

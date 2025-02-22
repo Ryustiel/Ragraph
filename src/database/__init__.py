@@ -1,14 +1,21 @@
 
-from ._config import (
-    EmbeddingsVector,
-)
-
-from ._postgre import (
+from ._database_connection import (
+    Node,
+    Edge,
     Content,
-    ContentSet,
     Accessor,
+
     ACCESSORS,
+
     DatabaseConnection,
 )
 
-from .interface import Context
+from .config import (
+    LayerConfig,
+    LayerName,
+    EmbeddingsVector,
+)
+
+from ._node_set import NodeSet
+
+from ._vectorizer import Vectorizer

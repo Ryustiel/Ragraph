@@ -10,18 +10,18 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import relationship
 
-from ._config import ACCESSOR_CONFIG, AccessorConfig
-from ._naming import *
-from .D_Accessor import *
+from .config import LAYER_CONFIG
+from .naming import *
+from ._C_Accessor import *
 
 
 ACCESSORS: Dict[str, Accessor] = {}
 
-for layer_name, config in ACCESSOR_CONFIG.items():
+for layer_name, layer_config in LAYER_CONFIG.items():
     
-    accessor_edges = type(
+    LayerEdgeORM = type(
         edge_class_name(layer_name),
-        (AccessorEdge,),
+        (Edge,),
         {
             "__tablename__": edge_table_name(layer_name),
             "accessor_id": Column(
@@ -40,27 +40,24 @@ for layer_name, config in ACCESSOR_CONFIG.items():
             ),
         },
     )
-    
-    review_edge_association = Table(
-        f'{REVIEW_TABLE_NAME}_association',
-        Base.metadata,
-        Column('review_id', Integer, ForeignKey(f'{REVIEW_TABLE_NAME}.id', ondelete="CASCADE")),
-        Column('edge_id', Integer, ForeignKey(f'{edge_table_name(layer_name)}.id', ondelete="CASCADE"))
-    )
 
-    accessor_class = type(
+    LayerAccessorORM = type(
         accessor_class_name(layer_name),
         (Accessor,),
         {
             "__tablename__": accessor_table_name(layer_name),
             "embedding": Column(
-                Vector(dim=config.embeddings_dimension),
+                Vector(dim=layer_config.embeddings_dimension),
                 nullable=False,
             ),
-            "edges": accessor_edges,
+            "proxy": Column(
+                Integer,
+                ForeignKey(f'{accessor_table_name(layer_name)}.id')
+            ),
+            "EdgeORM": LayerEdgeORM,
             "layer_name": layer_name,
-            "accessor_config": config, 
+            "layer_config": layer_config, 
         },
     )
 
-    ACCESSORS[layer_name] = accessor_class
+    ACCESSORS[layer_name] = LayerAccessorORM

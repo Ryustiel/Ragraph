@@ -13,7 +13,7 @@ from sqlalchemy import create_engine, text, Engine
 from sqlalchemy.orm import sessionmaker, Session
 
 # NOTE : Keep these imports ordered in the order the Base object is juggled around. (case of adding an extra table)
-from .E_DynamicTables import *
+from ._D_Dynamic_Generation import *
 
 class DatabaseConnection:
     """
@@ -53,7 +53,7 @@ class DatabaseConnection:
     def drop_tables(self):
         """Drops all tables in the database."""
         # Base.metadata.drop_all(self.engine)
-        with self.engine.connect() as connection:
+        with self.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as connection:
             connection.execute(text("""
                 DO $$ 
                 BEGIN
