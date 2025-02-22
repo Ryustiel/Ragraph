@@ -45,7 +45,7 @@ class Accessor(Node):
         raise NotImplementedError("Subclasses must define the 'proxy' column")
      
 
-    def get_contents(self, session: Session) -> NodeSet[Content]:
+    def next_contents(self, session: Session) -> NodeSet[Content]:
         """
         Returns a set of weighted contents from the edges of this accessor (or the accessor it's a proxy of).
         """
@@ -72,33 +72,33 @@ class Accessor(Node):
         """
         vector = cls.layer_config.embeddings_function(input)
 
-        subq = (  # Making sure the similarity is computed once
+        subq = (
             session.query(
-                cls,
+                cls.id.label("id"),
                 cls.embedding.cosine_distance(vector).label("similarity")
             )
             .subquery()
         )
 
-        matches: List[Tuple[Accessor, float]] = (
-            session.query(subq)
+        # Join back to the full table, so we load the entire accessor row.
+        q = (
+            session.query(cls, subq.c.similarity)
+            .join(subq, cls.id == subq.c.id)
             .order_by(subq.c.similarity)
             .limit(max_output)
-            .all()
         )
 
         accessor_set = NodeSet[Accessor]()
 
-        for accessor, similarity in matches:
-
+        for accessor, similarity in q.all():
+            # Check if this accessor is a proxy for another
             if accessor.proxy is not None:
-
                 if accessor.proxy in accessor_set.keys():
-                    # A better proxy has been added for this node previously. Skip this one.
+                    # A better proxy has been added previously; skip
                     continue
                 else:
                     accessor = accessor.proxy
-            
+
             accessor_set[accessor] = (similarity, 1)
 
         return accessor_set

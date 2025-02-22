@@ -2,6 +2,9 @@
 from typing import (
     List,
     Dict,
+    Union,
+    Optional,
+    Iterable,
 )
 
 from ..database import (
@@ -13,11 +16,14 @@ from ..database import (
 from sqlalchemy.orm import Session
 
 
-
 class AccessorContext(List[str]):
+
+    def __init__(self, initial_value: Optional[Union[str, Iterable[str]]] = None):
+        if isinstance(initial_value, str):
+            initial_value = [initial_value]
+        super().__init__(initial_value)
     
-    
-    def get_accessors(self, db_session: Session, layer: LayerName) -> NodeSet[Accessor]:
+    def accessors(self, db_session: Session, layer: LayerName) -> NodeSet[Accessor]:
 
         AccessorORM = ACCESSORS[layer]
 
@@ -29,28 +35,35 @@ class AccessorContext(List[str]):
         return result
         
 
+class Context(Dict[LayerName, AccessorContext]):
 
-class Context(Dict[str, AccessorContext]):
-    
+    def __init__(self, **kwargs: Optional[Union[List[str], AccessorContext]]) -> None:
+        super().__init__()
+        for key, value in kwargs.items():
+            self.__setitem__(key, value)
 
-    def get_accessors(self, db_session: Session) -> Dict[LayerName, NodeSet[Accessor]]:
+    def __setitem__(self, key: LayerName, value: Union[str, List[str], AccessorContext]) -> None:
+        if not isinstance(value, AccessorContext):
+            value = AccessorContext(value)
+        super().__setitem__(key, value)
+
+    def accessors(self, db_session: Session) -> Dict[LayerName, NodeSet[Accessor]]:
 
         return {
-            layer_name : accessor_context.get_accessors(db_session)
+            layer_name : accessor_context.accessors(db_session)
             for layer_name, accessor_context in self.items()
         }
-    
 
-    def get_contents(self, db_session: Session) -> NodeSet[Content]:
+    def contents(self, db_session: Session) -> NodeSet[Content]:
 
         accessors = NodeSet[Accessor]()
         
         for layer_name, accessor_context in self.items():
-            accessors += accessor_context.get_accessors(db_session, layer=layer_name)
+            accessors += accessor_context.accessors(db_session, layer=layer_name)
 
         contents = NodeSet[Content]()
 
         for accessor in accessors:
-            contents += accessor.get_contents(db_session)
+            contents += accessor.next_contents(db_session)
 
         return contents

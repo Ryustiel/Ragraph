@@ -12,7 +12,7 @@ This script performs the following:
 
 from sqlalchemy.orm import Session
 from src.database import Content, DatabaseConnection
-from src.transactions import ContentTransaction, AccessorTransaction
+from src.transactions import ContentTransaction, AccessorTransaction, Context, AccessorContext
 
 import os
 import dotenv
@@ -20,17 +20,17 @@ dotenv.load_dotenv(override=True)
 
 
 db_conn = DatabaseConnection(url=os.environ.get("DATABASE_CONNECTION_STRING"))
-db_conn.drop_tables()
+# db_conn.drop_tables()
 db_conn.create_tables()
 
 session: Session = db_conn.create_session()
 
 try:
-    content_tx = ContentTransaction(text="Demo Content Inserted")
+    content_tx = ContentTransaction(text="Reaching content Inserted")
     content_tx.commit(session)
     print("Inserted Content ID:", content_tx.id)
     
-    accessor_tx = AccessorTransaction(embeddable="Demo Accessor", layer_name="tasks")
+    accessor_tx = AccessorTransaction(embeddable="Reaching", layer_name="tasks")
     accessor_tx.commit(session)
     print("Inserted Accessor ID:", accessor_tx.id)
     
@@ -48,5 +48,9 @@ try:
         linked_edges = list(content_obj.get_linked_accessors(allowed_layers=["tasks"]))
         for edge in linked_edges:
             print("Content:", content_obj.text, "Edge Weight:", edge.weight)
+
+    for content in Context(tasks=["reach", "demo"]).contents(session).get_nodes_weighted():
+        print(content.__dict__)
+    
 finally:
     session.close()
